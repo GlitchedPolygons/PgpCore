@@ -379,6 +379,11 @@ namespace PgpCore
 				PgpPublicKey publicKey = publicKeyRing.PreferredEncryptionKey ?? publicKeyRing.DefaultEncryptionKey;
 				encryptedDataGenerator.AddMethod(publicKey);
 			}
+			
+			if (EncryptionKeys.SymmetricKey != null && EncryptionKeys.SymmetricKey.Length > 0)
+			{
+				encryptedDataGenerator.AddMethodRaw(EncryptionKeys.SymmetricKey, HashAlgorithmTag);
+			}
 
 			return encryptedDataGenerator.Open(outputStream, new byte[BufferSize]);
 		}

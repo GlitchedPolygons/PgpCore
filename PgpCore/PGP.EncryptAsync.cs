@@ -100,6 +100,11 @@ namespace PgpCore
                 PgpPublicKey publicKey = publicKeyRing.PreferredEncryptionKey ?? publicKeyRing.DefaultEncryptionKey;
                 pk.AddMethod(publicKey);
             }
+            
+            if (EncryptionKeys.SymmetricKey != null && EncryptionKeys.SymmetricKey.Length > 0)
+            {
+                pk.AddMethodRaw(EncryptionKeys.SymmetricKey, HashAlgorithmTag);
+            }
 
             if (CompressionAlgorithm != CompressionAlgorithmTag.Uncompressed)
             {
