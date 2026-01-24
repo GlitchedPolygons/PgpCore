@@ -113,7 +113,7 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Theory]
-        [MemberData(nameof(GetCompressionAlgorithimTags))]
+        [MemberData(nameof(GetCompressionAlgorithmTags))]
         public async Task DecryptAsync_DecryptEncryptedCompressedMessage_ShouldDecryptMessage(CompressionAlgorithmTag compressionAlgorithmTag)
         {
             // Arrange
@@ -144,7 +144,7 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Theory]
-        [MemberData(nameof(GetCompressionAlgorithimTags))]
+        [MemberData(nameof(GetCompressionAlgorithmTags))]
         public async Task DecryptAsync_DecryptBinaryEncryptedCompressedMessage_ShouldDecryptMessage(CompressionAlgorithmTag compressionAlgorithmTag)
         {
             // Arrange
@@ -176,8 +176,8 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Theory]
-        [MemberData(nameof(GetHashAlgorithimTags))]
-        public async Task DecryptAsync_DecryptEncryptedWithSpecifiedHashAlgorithim_ShouldDecryptMessage(HashAlgorithmTag hashAlgorithmTag)
+        [MemberData(nameof(GetHashAlgorithmTags))]
+        public async Task DecryptAsync_DecryptEncryptedWithSpecifiedHashAlgorithm_ShouldDecryptMessage(HashAlgorithmTag hashAlgorithmTag)
         {
             // Arrange
             TestFactory testFactory = new TestFactory();
@@ -207,8 +207,8 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Theory]
-        [MemberData(nameof(GetHashAlgorithimTags))]
-        public async Task DecryptAsync_DecryptBinaryEncryptedWithSpecifiedHashAlgorithim_ShouldDecryptMessage(HashAlgorithmTag hashAlgorithmTag)
+        [MemberData(nameof(GetHashAlgorithmTags))]
+        public async Task DecryptAsync_DecryptBinaryEncryptedWithSpecifiedHashAlgorithm_ShouldDecryptMessage(HashAlgorithmTag hashAlgorithmTag)
         {
             // Arrange
             TestFactory testFactory = new TestFactory();
@@ -239,8 +239,8 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Theory]
-        [MemberData(nameof(GetSymmetricAlgorithimTags))]
-        public async Task DecryptAsync_DecryptEncryptedWithSpecifiedSymetricKeyAlgorithim_ShouldDecryptMessage(SymmetricKeyAlgorithmTag symmetricKeyAlgorithmTag)
+        [MemberData(nameof(GetSymmetricAlgorithmTags))]
+        public async Task DecryptAsync_DecryptEncryptedWithSpecifiedSymmetricKeyAlgorithm_ShouldDecryptMessage(SymmetricKeyAlgorithmTag symmetricKeyAlgorithmTag)
         {
             // Arrange
             TestFactory testFactory = new TestFactory();
@@ -273,8 +273,8 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Theory]
-        [MemberData(nameof(GetSymmetricAlgorithimTags))]
-        public async Task DecryptAsync_DecryptBinaryEncryptedWithSpecifiedSymetricKeyAlgorithim_ShouldDecryptMessage(SymmetricKeyAlgorithmTag symmetricKeyAlgorithmTag)
+        [MemberData(nameof(GetSymmetricAlgorithmTags))]
+        public async Task DecryptAsync_DecryptBinaryEncryptedWithSpecifiedSymmetricKeyAlgorithm_ShouldDecryptMessage(SymmetricKeyAlgorithmTag symmetricKeyAlgorithmTag)
         {
             // Arrange
             TestFactory testFactory = new TestFactory();
@@ -308,7 +308,7 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Fact]
-        public async Task DecryptAsync_DecryptEncryptedWithNullSymetricKeyAlgorithim_ShouldThrowException()
+        public async Task DecryptAsync_DecryptEncryptedWithNullSymmetricKeyAlgorithm_ShouldThrowException()
         {
             // Arrange
             TestFactory testFactory = new TestFactory();
@@ -336,7 +336,7 @@ namespace PgpCore.Tests.UnitTests.Decrypt
         }
 
         [Fact]
-        public async Task DecryptAsync_DecryptEncryptedWithSaferSymetricKeyAlgorithim_ShouldThrowException()
+        public async Task DecryptAsync_DecryptEncryptedWithSaferSymmetricKeyAlgorithm_ShouldThrowException()
         {
             // Arrange
             TestFactory testFactory = new TestFactory();
