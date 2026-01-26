@@ -303,6 +303,30 @@ namespace PgpCore
 			_passPhrase = passPhrase;
 			InitializeKeys(keyRings);
 		}
+		
+		/// <summary>
+		/// Initializes a new instance of the EncryptionKeys class that is to be used for symmetric encryption/decryption exclusively.
+		/// The data is encrypted with the passed <paramref name="symmetricKey"/>.
+		/// </summary>
+		/// <param name="symmetricKey">The key used to encrypt/decrypt the data</param>
+		public EncryptionKeys(byte[] symmetricKey)
+		{
+			if (symmetricKey == null || symmetricKey.Length == 0)
+			{
+				throw new ArgumentException("SymmetricKey");
+			}
+			
+			_symmetricKey = symmetricKey;
+			
+			try
+			{
+				InitializeKeys(Array.Empty<PgpPublicKeyRing>());
+			}
+			catch (Exception ex)
+			{
+				throw new PgpException($"Error initializing keys.", ex);
+			}
+		}
 
 		/// <summary>
 		/// Initializes a new instance of the EncryptionKeys class.

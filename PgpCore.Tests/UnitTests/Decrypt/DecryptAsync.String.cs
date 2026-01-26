@@ -21,8 +21,8 @@ namespace PgpCore.Tests.UnitTests.Decrypt
             // Arrange
             TestFactory testFactory = new TestFactory();
             await testFactory.ArrangeAsync(KeyType.Symmetric, FileType.Known);
-            EncryptionKeys encryptionKeys = new EncryptionKeys(string.Empty, testFactory.SymmetricKey);
-            EncryptionKeys decryptionKeys = new EncryptionKeys(string.Empty, string.Empty, testFactory.SymmetricKey);
+            EncryptionKeys encryptionKeys = new EncryptionKeys(testFactory.SymmetricKey);
+            EncryptionKeys decryptionKeys = new EncryptionKeys(testFactory.SymmetricKey);
             PGP pgpEncrypt = new PGP(encryptionKeys);
             PGP pgpDecrypt = new PGP(decryptionKeys);
 
