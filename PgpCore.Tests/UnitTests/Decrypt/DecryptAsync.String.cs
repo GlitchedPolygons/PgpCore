@@ -97,6 +97,37 @@ namespace PgpCore.Tests.UnitTests.Decrypt
             // Teardown
             testFactory.Teardown();
         }
+        
+        [Theory]
+        [InlineData(KeyType.Generated)]
+        [InlineData(KeyType.Known)]
+        [InlineData(KeyType.KnownGpg)]
+        [InlineData(KeyType.Symmetric)]
+        public async Task DecryptAsync_DecryptEncryptedMessageWithRawPassPhrase_ShouldDecryptMessage(KeyType keyType)
+        {
+            // Arrange
+            TestFactory testFactory = new TestFactory();
+            await testFactory.ArrangeAsync(keyType, FileType.Known);
+            EncryptionKeys encryptionKeys = new EncryptionKeys(testFactory.PublicKey, testFactory.SymmetricKey);
+            EncryptionKeys decryptionKeys = new EncryptionKeys(testFactory.PrivateKey, Encoding.UTF8.GetBytes(testFactory.Password), testFactory.SymmetricKey);
+            PGP pgpEncrypt = new PGP(encryptionKeys);
+            PGP pgpDecrypt = new PGP(decryptionKeys);
+
+            // Act
+            string encryptedContent = await pgpEncrypt.EncryptAsync(testFactory.Content);
+            string decryptedContent = await pgpDecrypt.DecryptAsync(encryptedContent);
+
+            // Assert
+            using (new AssertionScope())
+            {
+                encryptedContent.Should().NotBeNullOrEmpty();
+                decryptedContent.Should().NotBeNullOrEmpty();
+                decryptedContent.Should().Be(testFactory.Content);
+            }
+
+            // Teardown
+            testFactory.Teardown();
+        }
 
         [Theory]
         [InlineData(KeyType.Generated)]

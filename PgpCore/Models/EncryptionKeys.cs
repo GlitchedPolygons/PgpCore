@@ -32,7 +32,7 @@ namespace PgpCore
 
 		#region Instance Members (Private)
 
-		private readonly string _passPhrase;
+		private readonly byte[] _passPhrase;
 		private readonly byte[] _symmetricKey;
 
 		private Lazy<IEnumerable<PgpPublicKey>> _encryptKeys;
@@ -77,7 +77,41 @@ namespace PgpCore
 			_secretKeys =
 				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKey.GetStream()));
 
-			_passPhrase = passPhrase;
+			_passPhrase = Encoding.Default.GetBytes(passPhrase);
+			InitializeKeys(keyRings);
+		}
+		
+		/// <summary>
+		/// Initializes a new instance of the EncryptionKeys class.
+		/// Two keys are required to encrypt and sign data. Your private key and the recipients public key.
+		/// The data is encrypted with the recipients public key and signed with your private key.
+		/// </summary>
+		/// <param name="publicKey">The key used to encrypt the data</param>
+		/// <param name="privateKey">The key used to sign the data.</param>
+		/// <param name="rawPassPhrase">The raw passphrase bytes required to access the private key</param>
+		/// <exception cref="ArgumentException">Public key not found. Private key not found. Missing password</exception>
+		public EncryptionKeys(string publicKey, string privateKey, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else
+			{
+				if (string.IsNullOrEmpty(publicKey))
+					throw new ArgumentException("PublicKeyFilePath");
+				if (string.IsNullOrEmpty(privateKey))
+					throw new ArgumentException("PrivateKeyFilePath");
+				if (rawPassPhrase == null)
+					throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");	
+			}
+			
+			var keyRings = Utilities.ReadAllKeyRings(publicKey.GetStream());
+
+			_secretKeys =
+				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKey.GetStream()));
+
+			_passPhrase = rawPassPhrase;
 			InitializeKeys(keyRings);
 		}
 
@@ -115,7 +149,45 @@ namespace PgpCore
 
 			_secretKeys =
 				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyFile.OpenRead()));
-			_passPhrase = passPhrase;
+			_passPhrase = Encoding.Default.GetBytes(passPhrase);
+			InitializeKeys(keyRings);
+		}
+		
+		/// <summary>
+		/// Initializes a new instance of the EncryptionKeys class.
+		/// Two keys are required to encrypt and sign data. Your private key and the recipients public key.
+		/// The data is encrypted with the recipients public key and signed with your private key.
+		/// </summary>
+		/// <param name="publicKeyFile">The key used to encrypt the data</param>
+		/// <param name="privateKeyFile">The key used to sign the data.</param>
+		/// <param name="rawPassPhrase">The raw passphrase bytes required to access the private key</param>
+		/// <exception cref="ArgumentException">Public key not found. Private key not found. Missing password</exception>
+		public EncryptionKeys(FileInfo publicKeyFile, FileInfo privateKeyFile, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else
+			{
+				if (publicKeyFile == null)
+					throw new ArgumentException("PublicKeyFile");
+				if (privateKeyFile == null)
+					throw new ArgumentException("PrivateKeyFile");
+				if (rawPassPhrase == null)
+					throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
+
+				if (!publicKeyFile.Exists)
+					throw new FileNotFoundException($"Public Key file [{publicKeyFile.FullName}] does not exist.");
+				if (!privateKeyFile.Exists)
+					throw new FileNotFoundException($"Private Key file [{privateKeyFile.FullName}] does not exist.");
+			}
+			
+			var keyRings = Utilities.ReadAllKeyRings(publicKeyFile.OpenRead());
+
+			_secretKeys =
+				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyFile.OpenRead()));
+			_passPhrase = rawPassPhrase;
 			InitializeKeys(keyRings);
 		}
 
@@ -153,7 +225,45 @@ namespace PgpCore
 			
 			_secretKeys =
 				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKey.GetStream()));
-			_passPhrase = passPhrase;
+			_passPhrase = Encoding.Default.GetBytes(passPhrase);
+			InitializeKeys(keyRings);
+		}
+		
+		/// <summary>
+		/// Initializes a new instance of the EncryptionKeys class.
+		/// Two or more keys are required to encrypt and sign data. Your private key and the recipients public key(s).
+		/// The data is encrypted with the recipients public key(s) and signed with your private key.
+		/// </summary>
+		/// <param name="publicKeys">The key(s) used to encrypt the data</param>
+		/// <param name="privateKey">The key used to sign the data.</param>
+		/// <param name="rawPassPhrase">The raw passphrase bytes required to access the private key</param>
+		/// <exception cref="ArgumentException">Public key not found. Private key not found. Missing password</exception>
+		public EncryptionKeys(IEnumerable<string> publicKeys, string privateKey, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else
+			{
+				if (string.IsNullOrEmpty(privateKey))
+					throw new ArgumentException("PrivateKeyFilePath");
+				if (rawPassPhrase == null)
+					throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
+			}
+			
+			string[] publicKeyStrings = publicKeys.ToArray(); // Avoid multiple enumeration
+			foreach (string publicKey in publicKeyStrings)
+			{
+				if (string.IsNullOrEmpty(publicKey))
+					throw new ArgumentException(nameof(publicKey));
+			}
+				
+			var keyRings = Utilities.ReadAllKeyRings(publicKeyStrings.Select(s => s.GetStream()));
+			
+			_secretKeys =
+				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKey.GetStream()));
+			_passPhrase = rawPassPhrase;
 			InitializeKeys(keyRings);
 		}
 
@@ -200,7 +310,54 @@ namespace PgpCore
 
 			_secretKeys =
 				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyFile.OpenRead()));
-			_passPhrase = passPhrase;
+			_passPhrase = Encoding.Default.GetBytes(passPhrase);
+			InitializeKeys(keyRings);
+		}
+		
+		/// <summary>
+		/// Initializes a new instance of the EncryptionKeys class.
+		/// Two or more keys are required to encrypt and sign data. Your private key and the recipients public key(s).
+		/// The data is encrypted with the recipients public key(s) and signed with your private key.
+		/// </summary>
+		/// <param name="publicKeyFiles">The key(s) used to encrypt the data</param>
+		/// <param name="privateKeyFile">The key used to sign the data.</param>
+		/// <param name="rawPassPhrase">The raw passphrase bytes required to access the private key</param>
+		/// <exception cref="ArgumentException">Public key not found. Private key not found. Missing password</exception>
+		public EncryptionKeys(IEnumerable<FileInfo> publicKeyFiles, FileInfo privateKeyFile, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			// Avoid multiple enumerations of 'publicKeyFilePaths'
+			FileInfo[] publicKeys = publicKeyFiles.ToArray();
+
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else
+			{
+				if (privateKeyFile == null)
+					throw new ArgumentException("PrivateKeyFile");
+				if (rawPassPhrase == null)
+					throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
+
+				if (!privateKeyFile.Exists)
+					throw new FileNotFoundException($"Private Key file [{privateKeyFile.FullName}] does not exist.");
+			}
+
+			FileInfo[] publicKeyFileInfos = publicKeys.ToArray(); // Avoid multiple enumeration
+
+			foreach (FileInfo publicKeyFile in publicKeyFileInfos)
+			{
+				if (publicKeyFile == null)
+					throw new ArgumentException(nameof(publicKeyFile.FullName));
+				if (!File.Exists(publicKeyFile.FullName))
+					throw new FileNotFoundException($"Input file [{publicKeyFile.FullName}] does not exist.");
+			}
+			
+			var keyRings = Utilities.ReadAllKeyRings(publicKeys.Select(fileInfo => fileInfo.OpenRead()));
+
+			_secretKeys =
+				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyFile.OpenRead()));
+			_passPhrase = rawPassPhrase;
 			InitializeKeys(keyRings);
 		}
 
@@ -215,7 +372,22 @@ namespace PgpCore
 			
 			_secretKeys =
 				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKey.GetStream()));
-			_passPhrase = passPhrase ?? throw new ArgumentNullException(nameof(passPhrase), "Invalid Pass Phrase.");
+			_passPhrase = Encoding.Default.GetBytes(passPhrase ?? throw new ArgumentNullException(nameof(passPhrase), "Invalid Pass Phrase."));
+			InitializeKeys();
+		}
+		
+		public EncryptionKeys(string privateKey, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			} 
+			else if (string.IsNullOrEmpty(privateKey))
+				throw new ArgumentException("PrivateKey");
+			
+			_secretKeys =
+				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKey.GetStream()));
+			_passPhrase = rawPassPhrase ?? throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
 			InitializeKeys();
 		}
 
@@ -236,7 +408,28 @@ namespace PgpCore
 			
 			_secretKeys =
 				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyFile.OpenRead()));
-			_passPhrase = passPhrase ?? throw new ArgumentNullException(nameof(passPhrase), "Invalid Pass Phrase.");
+			_passPhrase = Encoding.Default.GetBytes(passPhrase ?? throw new ArgumentNullException(nameof(passPhrase), "Invalid Pass Phrase."));
+			InitializeKeys();
+		}
+		
+		public EncryptionKeys(FileInfo privateKeyFile, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else
+			{
+				if (privateKeyFile is null)
+					throw new ArgumentException("PrivateKeyFile");
+
+				if (!privateKeyFile.Exists)
+					throw new FileNotFoundException($"Private Key file [{privateKeyFile.FullName}] does not exist.");
+			}
+			
+			_secretKeys =
+				new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyFile.OpenRead()));
+			_passPhrase = rawPassPhrase ?? throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
 			InitializeKeys();
 		}
 
@@ -259,7 +452,30 @@ namespace PgpCore
 			var keyRings = Utilities.ReadAllKeyRings(publicKeyStream);
 
 			_secretKeys = new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyStream));
-			_passPhrase = passPhrase;
+			_passPhrase = Encoding.Default.GetBytes(passPhrase);
+			InitializeKeys(keyRings);
+		}
+		
+		public EncryptionKeys(Stream publicKeyStream, Stream privateKeyStream, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else
+			{
+				if (publicKeyStream == null)
+					throw new ArgumentException("PublicKeyStream");
+				if (privateKeyStream == null)
+					throw new ArgumentException("PrivateKeyStream");
+				if (rawPassPhrase == null)
+					throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
+			}
+			
+			var keyRings = Utilities.ReadAllKeyRings(publicKeyStream);
+
+			_secretKeys = new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyStream));
+			_passPhrase = rawPassPhrase;
 			InitializeKeys(keyRings);
 		}
 
@@ -273,7 +489,21 @@ namespace PgpCore
 				throw new ArgumentException("PrivateKeyStream");
 			
 			_secretKeys = new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyStream));
-			_passPhrase = passPhrase ?? throw new ArgumentNullException(nameof(passPhrase), "Invalid Pass Phrase.");
+			_passPhrase = Encoding.Default.GetBytes(passPhrase ?? throw new ArgumentNullException(nameof(passPhrase), "Invalid Pass Phrase."));
+			InitializeKeys();
+		}
+		
+		public EncryptionKeys(Stream privateKeyStream, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			else if (privateKeyStream == null)
+				throw new ArgumentException("PrivateKeyStream");
+			
+			_secretKeys = new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyStream));
+			_passPhrase = rawPassPhrase ?? throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
 			InitializeKeys();
 		}
 
@@ -300,7 +530,34 @@ namespace PgpCore
 			var keyRings = Utilities.ReadAllKeyRings(publicKeyStreamArray);
 
 			_secretKeys = new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyStream));
-			_passPhrase = passPhrase;
+			_passPhrase = Encoding.Default.GetBytes(passPhrase);
+			InitializeKeys(keyRings);
+		}
+		
+		public EncryptionKeys(IEnumerable<Stream> publicKeyStreams, Stream privateKeyStream, byte[] rawPassPhrase, byte[] symmetricKey = null)
+		{
+			// Avoid multiple enumerations of 'publicKeyFilePaths'
+			Stream[] publicKeyStreamArray = publicKeyStreams.ToArray();
+
+			if (privateKeyStream == null)
+				throw new ArgumentException("PrivateKeyStream");
+			if (rawPassPhrase == null)
+				throw new ArgumentNullException(nameof(rawPassPhrase), "Invalid Pass Phrase.");
+			foreach (Stream publicKeyStream in publicKeyStreamArray)
+			{
+				if (publicKeyStream == null)
+					throw new ArgumentException("PublicKeyStream");
+			}
+
+			if (symmetricKey != null && symmetricKey.Length > 0)
+			{
+				_symmetricKey = symmetricKey;
+			}
+			
+			var keyRings = Utilities.ReadAllKeyRings(publicKeyStreamArray);
+
+			_secretKeys = new Lazy<PgpSecretKeyRingBundle>(() => Utilities.ReadSecretKeyRingBundle(privateKeyStream));
+			_passPhrase = rawPassPhrase;
 			InitializeKeys(keyRings);
 		}
 		
@@ -521,7 +778,7 @@ namespace PgpCore
 			if (pgpSecKey == null)
 				return null;
 
-			return pgpSecKey.ExtractPrivateKey(_passPhrase.ToCharArray());
+			return pgpSecKey.ExtractPrivateKeyRaw(_passPhrase);
 		}
 
 		/// <summary>
@@ -541,9 +798,9 @@ namespace PgpCore
 
 		#region Private Key
 
-		private PgpPrivateKey ReadPrivateKey(PgpSecretKey secretKey, string passPhrase)
+		private PgpPrivateKey ReadPrivateKey(PgpSecretKey secretKey, byte[] rawPassPhrase)
 		{
-			PgpPrivateKey privateKey = secretKey.ExtractPrivateKey(passPhrase.ToCharArray());
+			PgpPrivateKey privateKey = secretKey.ExtractPrivateKeyRaw(rawPassPhrase);
 			if (privateKey != null)
 				return privateKey;
 
