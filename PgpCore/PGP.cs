@@ -37,6 +37,8 @@ namespace PgpCore
 
 		public IEncryptionKeys EncryptionKeys { get; private set; }
 
+		public bool AddVersionHeader { get; set; } = true;
+
 		#region Constructor
 
 		public PGP()
@@ -215,7 +217,7 @@ namespace PgpCore
 		private async Task OutputClearSignedAsync(Stream inputStream, Stream outputStream, IDictionary<string, string> headers)
 		{
 			using (StreamReader streamReader = new StreamReader(inputStream))
-			using (ArmoredOutputStream armoredOutputStream = new ArmoredOutputStream(outputStream, headers))
+			using (ArmoredOutputStream armoredOutputStream = new ArmoredOutputStream(outputStream, headers, AddVersionHeader))
 			{
 				PgpSignatureGenerator pgpSignatureGenerator = InitClearSignatureGenerator(armoredOutputStream);
 
@@ -265,7 +267,7 @@ namespace PgpCore
 		private void OutputClearSigned(Stream inputStream, Stream outputStream, IDictionary<string, string> headers)
 		{
 			using (StreamReader streamReader = new StreamReader(inputStream))
-			using (ArmoredOutputStream armoredOutputStream = new ArmoredOutputStream(outputStream, headers))
+			using (ArmoredOutputStream armoredOutputStream = new ArmoredOutputStream(outputStream, headers, AddVersionHeader))
 			{
 				PgpSignatureGenerator pgpSignatureGenerator = InitClearSignatureGenerator(armoredOutputStream);
 
@@ -495,7 +497,7 @@ namespace PgpCore
 			ArmoredOutputStream secretOutArmored;
 			if (armor)
 			{
-				secretOutArmored = new ArmoredOutputStream(secretOut);
+				secretOutArmored = new ArmoredOutputStream(secretOut, AddVersionHeader);
 				if (!emitVersion)
 				{
 					secretOutArmored.SetHeader(ArmoredOutputStream.HeaderVersion, null);
@@ -515,7 +517,7 @@ namespace PgpCore
 			ArmoredOutputStream publicOutArmored;
 			if (armor)
 			{
-				publicOutArmored = new ArmoredOutputStream(publicOut);
+				publicOutArmored = new ArmoredOutputStream(publicOut, AddVersionHeader);
 				if (!emitVersion)
 				{
 					publicOutArmored.SetHeader(ArmoredOutputStream.HeaderVersion, null);

@@ -88,7 +88,7 @@ namespace PgpCore
 
             if (armor)
             {
-                outputStream = new ArmoredOutputStream(outputStream, headers);
+                outputStream = new ArmoredOutputStream(outputStream, headers, AddVersionHeader);
             }
 
             PgpEncryptedDataGenerator pk =
@@ -207,7 +207,7 @@ namespace PgpCore
             {
                 if (armor)
                 {
-                    using (var armoredOutputStream = new ArmoredOutputStream(outputStream, headers))
+                    using (var armoredOutputStream = new ArmoredOutputStream(outputStream, headers, AddVersionHeader))
                     {
                         OutputEncrypted(inputFile, armoredOutputStream, withIntegrityCheck, name, oldFormat);
                     }
@@ -253,7 +253,7 @@ namespace PgpCore
 
             if (armor)
             {
-                using (var armoredOutputStream = new ArmoredOutputStream(outputStream, headers))
+                using (var armoredOutputStream = new ArmoredOutputStream(outputStream, headers, AddVersionHeader))
                 {
                     OutputEncrypted(inputStream, armoredOutputStream, withIntegrityCheck, name, oldFormat);
                 }
